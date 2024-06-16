@@ -22,7 +22,7 @@ public class Order {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL) // cascade를 언제 사용해야하는지가 명확하게 정해진건 아니지만 보통 persist 라이프사이클이 같고 private 오너일때 사용. 아닌 경우는 따로 repository만들어서 persist해줘야함
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -51,7 +51,7 @@ public class Order {
     }
 
     //== 생성 메서드 ==//
-    public static Order CreateOrder(Member member, Delivery delivery, OrderItem... orderItems) {
+    public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems) {
         Order order = new Order();
         order.setMember(member);
         order.setDelivery(delivery);
