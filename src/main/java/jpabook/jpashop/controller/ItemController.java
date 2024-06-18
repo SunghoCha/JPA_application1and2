@@ -3,6 +3,7 @@ package jpabook.jpashop.controller;
 import jakarta.validation.Valid;
 import jpabook.jpashop.domain.item.Book;
 import jpabook.jpashop.domain.item.Item;
+import jpabook.jpashop.domain.item.Movie;
 import jpabook.jpashop.dto.BookForm;
 import jpabook.jpashop.service.ItemService;
 import jpabook.jpashop.util.BookFormMapper;
@@ -54,7 +55,23 @@ public class ItemController {
     @GetMapping("items/{itemId}/edit")
     public String updateItemForm(@PathVariable("itemId") Long itemId, Model model) {
         Item item = itemService.findOne(itemId);
-
-        return "";
+        if (item instanceof Book) {
+            Book book = (Book) item;
+            BookForm bookForm = BookForm.builder()
+                    .id(book.getId())
+                    .name(book.getName())
+                    .price(book.getPrice())
+                    .stockQuantity(book.getStockQuantity())
+                    .author(book.getAuthor())// entity에 setter를 아예 안쓰는게 쉽지 않음..
+                    .isbn(book.getIsbn())
+                    .build();
+            model.addAttribute("bookForm", bookForm);
+        } else if (item instanceof Movie){
+            // Movie, Album인 경우...
+            // 지금은 임시로 Book만 조회 ( 그리고 이런 방식으로 코드를 작성해도 되는지 모르겠음...
+            // 애초에 아이템을 수정한다는게 개발자가 어떤 타입의 아이템인지 알고 있다는 뜻일텐데 지금의 가정은 아이템아이디만 알고 어떤 타입인지 모른다는 가정임
+            // 이런 상황이 존재하긴 하나?
+        }
+        return "items/updateItemForm";
     }
 }
