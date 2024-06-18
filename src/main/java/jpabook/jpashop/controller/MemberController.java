@@ -3,9 +3,9 @@ package jpabook.jpashop.controller;
 import jakarta.validation.Valid;
 import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Member;
+import jpabook.jpashop.dto.MemberForm;
 import jpabook.jpashop.service.MemberService;
 import jpabook.jpashop.util.MemberFormMapper;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -14,7 +14,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -36,8 +35,6 @@ public class MemberController {
 
         if (bindingResult.hasErrors()) {
             log.info("bindingResult : {}",bindingResult);
-            log.info("bindingResult.getTarget() : {}",bindingResult.getTarget());
-            log.info("bindingResult.getObjectName() : {}",bindingResult.getObjectName());
             return "members/createMemberForm";
         }
         Address address = MemberFormMapper.INSTANCE.toAddress(memberForm);

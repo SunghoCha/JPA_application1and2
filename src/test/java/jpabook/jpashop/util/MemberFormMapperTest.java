@@ -1,6 +1,6 @@
 package jpabook.jpashop.util;
 
-import jpabook.jpashop.controller.MemberForm;
+import jpabook.jpashop.dto.MemberForm;
 import jpabook.jpashop.domain.Address;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ class MemberFormMapperTest {
     private final String STREET = "거리99";
     private final String ZIPCODE = "우편99";
     @Test
-    public void 맵핑테스트() throws Exception {
+    public void 매핑테스트() throws Exception {
         //given
         MemberForm memberForm = MemberForm.builder()
                 .name(NAME)

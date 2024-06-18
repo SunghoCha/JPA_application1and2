@@ -1,8 +1,7 @@
 package jpabook.jpashop.util;
 
-import jpabook.jpashop.controller.MemberForm;
+import jpabook.jpashop.dto.MemberForm;
 import jpabook.jpashop.domain.Address;
-import jpabook.jpashop.domain.Member;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
