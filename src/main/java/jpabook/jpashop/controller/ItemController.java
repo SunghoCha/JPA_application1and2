@@ -2,6 +2,7 @@ package jpabook.jpashop.controller;
 
 import jakarta.validation.Valid;
 import jpabook.jpashop.domain.item.Book;
+import jpabook.jpashop.domain.item.Item;
 import jpabook.jpashop.dto.BookForm;
 import jpabook.jpashop.service.ItemService;
 import jpabook.jpashop.util.BookFormMapper;
@@ -14,6 +15,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.List;
 
 @Slf4j
 @Controller
@@ -37,6 +40,13 @@ public class ItemController {
         }
         Book book = BookFormMapper.INSTANCE.toBook(bookForm);
         itemService.saveItem(book);
-        return "redirect:/";
+        return "redirect:/itemList";
+    }
+
+    @GetMapping("/items")
+    public String list(Model model) {
+        List<Item> items = itemService.findItems();
+        model.addAttribute("items", items);
+        return "items/itemList";
     }
 }
