@@ -41,6 +41,7 @@ public class MemberController {
             return "members/createMemberForm";
         }
         Address address = MemberFormMapper.INSTANCE.toAddress(memberForm);
+        log.info("address : {}", address);
         Member member = Member.builder()
                                 .name(memberForm.getName())
                                 .address(address)
@@ -51,7 +52,7 @@ public class MemberController {
 
     @GetMapping("/members")
     public String list(Model model) {
-        List<Member> members = memberService.findMembers();
+        List<Member> members = memberService.findMembers(); // 일단 서버단에서 뷰로 렌더링하는거라 member로 보내긴했는데 restAPI에선 절대 하지 말것
         model.addAttribute("members", members);
         return "members/memberList";
     }

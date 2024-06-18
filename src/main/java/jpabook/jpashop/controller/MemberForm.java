@@ -1,11 +1,11 @@
 package jpabook.jpashop.controller;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.validator.constraints.NotBlank;
 
-@Getter
-@Setter
+@Builder
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 public class MemberForm {
 
     @NotBlank
