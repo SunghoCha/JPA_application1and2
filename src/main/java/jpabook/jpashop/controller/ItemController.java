@@ -74,4 +74,10 @@ public class ItemController {
         }
         return "items/updateItemForm";
     }
+
+    @PostMapping("items/{itemId}/edit")
+    public String updateItem(@PathVariable String itemId, @ModelAttribute("form") BookForm form) {
+
+        return "";
+    }
 }
