@@ -62,7 +62,7 @@ public class ItemController {
                     .name(book.getName())
                     .price(book.getPrice())
                     .stockQuantity(book.getStockQuantity())
-                    .author(book.getAuthor())// entity에 setter를 아예 안쓰는게 쉽지 않음..
+                    .author(book.getAuthor())
                     .isbn(book.getIsbn())
                     .build();
             model.addAttribute("bookForm", bookForm);
@@ -76,8 +76,10 @@ public class ItemController {
     }
 
     @PostMapping("items/{itemId}/edit")
-    public String updateItem(@PathVariable String itemId, @ModelAttribute("form") BookForm form) {
+    public String updateItem(@PathVariable Long itemId, @ModelAttribute("form") BookForm form) {
 
-        return "";
+        itemService.updateItem(itemId, form.getName(), form.getPrice(), form.getStockQuantity()); // 컨트롤러에서 어설프게 엔티티를 파라미터로 넘기지말고 필요한 데이터만 넘길것
+        // 받아야할 파라미터가 많으면 update용 dto 만들기 (근데 BookForm이 update용 dto 아닌가?)
+        return "redirect:/items";
     }
 }
