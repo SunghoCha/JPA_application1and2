@@ -42,7 +42,7 @@ public class ItemController {
         }
         Book book = BookFormMapper.INSTANCE.toBook(bookForm);
         itemService.saveItem(book);
-        return "redirect:/itemList";
+        return "redirect:/items";
     }
 
     @GetMapping("/items")
