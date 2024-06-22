@@ -1,4 +1,4 @@
-package jpabook.jpashop.api;
+package jpabook.jpashop.api.dto;
 
 import jakarta.persistence.Embedded;
 import jakarta.validation.constraints.NotBlank;
