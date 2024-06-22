@@ -6,11 +6,34 @@ import jpabook.jpashop.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequiredArgsConstructor
 public class MemberApiController {
 
     private final MemberService memberService;
+
+    @GetMapping("/api/v1/members")
+    public List<Member> memberV1() {
+        return memberService.findMembers();
+    }
+    /*
+        엔티티가 직접 노출되버리면 API스펙에 맞게 변경되어야 하고 결국 프레젠테이션 계층에 의존하게 되면서 프레젠테이션계층과 엔티티간에 양방향 의존관계가 생겨버림
+        엔티티의 순수성이 깨지고 결국 여러 API가 원하는 스펙을 엔티티로는 감당 못하게되어 변경이 어려워짐
+        API 응답 스펙에 맞춰 별도의 DTO를 만들어서 반환해야 한다.
+        그리고 단순히 리스트형식으로 반환되면 다른 타입의 여러 데이터들을 추가하기가 어려워져 유연성이 떨어짐
+     */
+
+    @GetMapping("/api/v2/members")
+    public Result memberV2() {
+        List<Member> findMembers = memberService.findMembers();
+        List<MemberDto> memberDtos = findMembers.stream()
+                .map(member -> new MemberDto(member.getName()))
+                .collect(Collectors.toList());
+        return new Result(memberDtos); //리스트를 바로 반환하는 것이 아니고 객체에 담아서 해야 추후 변경에서 유연함 생김
+    }
 
     @PostMapping("/api/v1/members")
     public CreateMemberResponse saveMemberV1(@RequestBody @Valid Member member) {
