@@ -8,12 +8,14 @@ import jpabook.jpashop.service.ItemService;
 import jpabook.jpashop.service.MemberService;
 import jpabook.jpashop.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
@@ -47,12 +49,17 @@ public class OrderController {
     public String orderList(@ModelAttribute("orderSearch")OrderSearch orderSearch, Model model) {
         List<Order> orders = orderService.findOrders(orderSearch);
         model.addAttribute("orders", orders);
+        log.info("========== Get ==========");
+        log.info("orderSearch user : {}", orderSearch.getMemberName());
+        log.info("orderSearch status : {}", orderSearch.getOrderStatus());
+
         return "order/orderList";
     }
 
     @PostMapping("orders/{orderId}/cancel")
     public String cancelOrder(@PathVariable("orderId") Long orderId) {
         orderService.cancelOrder(orderId);
+        log.info("========== Post ==========");
         return "redirect:/orders";
     }
 }
