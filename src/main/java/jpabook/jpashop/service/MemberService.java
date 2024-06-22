@@ -1,5 +1,6 @@
 package jpabook.jpashop.service;
 
+import jpabook.jpashop.api.UpdateMemberRequest;
 import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.repository.MemberRepository;
 import lombok.AllArgsConstructor;
@@ -45,5 +46,19 @@ public class MemberService {
 
     public Member findOne(Long memberId) {
         return memberRepository.findOne(memberId);
+    }
+
+    @Transactional
+    public void update(Long id, UpdateMemberRequest updateMemberRequest) {
+        Member member = memberRepository.findOne(id); // 트랜잭션 안에서 영속성 컨텍스트인 member 객체 얻음
+        member.setName(updateMemberRequest.getName());  // 변경감지 적용
+        /*
+            새로 find한 member라서 영속성컨텍스트의 1차캐시에 없을 것이고 DB에서 새로 가져오면서 1차 캐시에 저장 후 member 반환해줌
+            member.setName()을 하면 1차 캐시의 스냅샷과 다른 결과 생김
+            setName()완료하면 핵심 로직이 끝난 것이므로 @Transactional 관련 AOP가 작동하면서 commit을 하게됨
+            이 떄 JPA는 flush()를 하게 되는데 스냅샷에 변경이 일어났으므로 쓰기지연저장소에 변경사항을 update문으로 저장하고 flush()를 함
+            flush()를 하면 쓰기지연저장소의 모든 쿼리문이 DB에 명령어로 전달되고 비워짐(1차캐시는 남아있는 상태)
+            그 후 DB의 commit이 일어나며 DB에 모든 변경사항이 반영됨
+         */
     }
 }
