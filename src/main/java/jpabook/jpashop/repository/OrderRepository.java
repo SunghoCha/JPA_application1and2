@@ -78,4 +78,12 @@ public class OrderRepository {
 
         return query.getResultList();
     }
+
+    public List<Order> findAllWithMemberDelivery() {
+        return em.createQuery(
+                "select o from Order o " +
+                        " join fetch o.member m " +
+                        " join fetch o.delivery d ", Order.class // LAZY 무시하고 관련된 테이블 다 조인해서 한 번에 가져옴 (fetch join)
+                        ).getResultList();
+    }
 }
