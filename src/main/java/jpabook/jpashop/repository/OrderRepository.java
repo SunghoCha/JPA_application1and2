@@ -2,6 +2,7 @@ package jpabook.jpashop.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import jpabook.jpashop.api.dto.OrderSimpleQueryDto;
 import jpabook.jpashop.domain.Order;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -85,5 +86,13 @@ public class OrderRepository {
                         " join fetch o.member m " +
                         " join fetch o.delivery d ", Order.class // LAZY 무시하고 관련된 테이블 다 조인해서 한 번에 가져옴 (fetch join)
                         ).getResultList();
+    }
+
+    public List<OrderSimpleQueryDto> findOrderDtos() {
+        return em.createQuery( // new OrderSimpleQueryDto() 파라미터로 order 전달하면 orderId가 전달되어서 따로 써줘야함. d.address는 값타입이라 제대로 인식가능
+                "select new jpabook.jpashop.api.dto.OrderSimpleQueryDto(o.id, m.name, o.orderDate, o.status, d.address) from Order o" +
+                        " join o.member m" +
+                        " join o.delivery d", OrderSimpleQueryDto.class) // 기본적으로 JPA는 ENTITY나 VO만 반환가능하기 때문에 직접 설정 필요..
+                .getResultList();
     }
 }
