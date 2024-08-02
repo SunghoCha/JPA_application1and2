@@ -88,11 +88,19 @@ public class OrderRepository {
                         ).getResultList();
     }
 
+    // 재사용성 떨어짐. 성능최적화지만 미비한수준. repository가 view에 의존하는것과 마찬가지. api 스펙바뀌면 같이 바뀜. dto에 의존하게 하지말고 entity 수준에서 해결하자
     public List<OrderSimpleQueryDto> findOrderDtos() {
         return em.createQuery( // new OrderSimpleQueryDto() 파라미터로 order 전달하면 orderId가 전달되어서 따로 써줘야함. d.address는 값타입이라 제대로 인식가능
                 "select new jpabook.jpashop.api.dto.OrderSimpleQueryDto(o.id, m.name, o.orderDate, o.status, d.address) from Order o" +
                         " join o.member m" +
                         " join o.delivery d", OrderSimpleQueryDto.class) // 기본적으로 JPA는 ENTITY나 VO만 반환가능하기 때문에 직접 설정 필요..
                 .getResultList();
+
+        /*   쿼리 방식 선택 권장 순서
+             1. 우선 엔티티를 조회 후 DTO로 변환하는 방법을 선택
+             2. 필요하면 페치 조인으로 성능 최적화 (대부분의 성능 이슈 해결됨)
+             3. 그래도 안되면 DTO로 직접 조회하는 방법 선택 (별도의 전용 Repository 생성)
+             4. 최후의 방법은 JPA가 제공하는 네이티브 SQL이나 스프링 JDBC Template를 사용해서 SQL을 직접 사용한다.
+         */
     }
 }
