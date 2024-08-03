@@ -1,14 +1,20 @@
 package jpabook.jpashop.api.controller;
 
+import jpabook.jpashop.api.dto.OrderDto;
 import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,4 +36,13 @@ public class OrderApiController {
             엔티티를 직접 노출하는 방식이므로 사용하지 말 것. 벌써부터 엔티티에 순환참조 막으려고 @JsonIgnore 사용해야하고 지저분해짐
          */
     }
+
+    @GetMapping("/api/v2/orders")
+    public List<OrderDto> orderV2() {
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch());
+        return orders.stream()
+                .map(OrderDto::of)
+                .collect(toList());
+    }
+
 }
