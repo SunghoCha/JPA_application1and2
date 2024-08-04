@@ -68,8 +68,14 @@ public class OrderApiController {
         return orders.stream().map(OrderDto::of).collect(toList());
     }
 
+    // N+1 문제 발생
     @GetMapping("/api/v4/orders")
     public List<OrderQueryDto> ordersV4() {
         return orderQueryRepository.findOrderQueryDtos();
     }
+
+//    @GetMapping("/api/v5/orders")
+//    public List<OrderQueryDto> ordersV5() {
+//        return orderQueryRepository.findAllByDto();
+//    }
 }

@@ -17,9 +17,21 @@ public class OrderQueryRepository {
         result.forEach(o -> {
             List<OrderItemQueryDto> orderItems = findOrderItems(o.getOrderId());
             o.setOrderItems(orderItems);
-        });
+        }); // 여기서 N번의 쿼리 발생
         return result;
     }
+
+//    public List<OrderQueryDto> findAllByDto() {
+//        List<OrderQueryDto> result = findOrders();
+//
+//        return em.createQuery(
+//                        "select new jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id ,i.name, oi.orderPrice, oi.count)" +
+//                                " from OrderItem oi" +
+//                                " join oi.item i " +
+//                                " where oi.order.id = :orderId", OrderItemQueryDto.class)
+//                .setParameter("orderId", orderId)
+//                .getResultList();
+//    }
 
     // oi.order.id로 표기했지만 실제 테이블에선 oi.order에서 order_id 찾을 수 있으므로 order 참조하지않고 id값 가져올 수 있음
     private List<OrderItemQueryDto> findOrderItems(Long orderId) {
