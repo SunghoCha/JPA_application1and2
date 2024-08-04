@@ -103,4 +103,19 @@ public class OrderRepository {
              4. 최후의 방법은 JPA가 제공하는 네이티브 SQL이나 스프링 JDBC Template를 사용해서 SQL을 직접 사용한다.
          */
     }
+
+    // JPA의 distinct : order(root =(from "entity"))의 Id가 같으면 중복 제거해줌 (DB의 distinct는 row 데이터 전체가 일치해야만 적용됨)
+    // DB에서 관련 데이터를 전부 가져와 메모리에 로딩한다음에 order(root)를 기준으로 distinct 적용.
+    // 페이징 시 위험할 수 있음.
+    // 일대다 관계에서 '다'에 맞춰서 데이터 늘어나서 원하는 페이징 어려움. 일단 메모리에 전체 데이터 불러와서 페이징처리 -> out of memory
+    // 그런데 페이징 전에도 어차피 전체 데이터 가져와서 메모리에 로딩하는건 똑같은거 아닌가?
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                "select distinct o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d" +
+                        " join fetch o.orderItems oi" +
+                        " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
 }

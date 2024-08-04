@@ -6,6 +6,7 @@ import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class OrderApiController {
@@ -45,4 +47,13 @@ public class OrderApiController {
                 .collect(toList());
     }
 
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+        log.info("orders size : {}", orders.size());
+        for (Order order : orders) {
+            log.info("order : {}, id : {}" ,order, order.getId());
+        }
+        return orders.stream().map(OrderDto::of).collect(toList());
+    }
 }

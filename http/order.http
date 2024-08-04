@@ -3,4 +3,4 @@ GET http://localhost:8080/api/v3/simple-orders
 
 
 ### 주문조회 (컬렉션 조회)
-GET http://localhost:8080/api/v2/orders
+GET http://localhost:8080/api/v3/orders
