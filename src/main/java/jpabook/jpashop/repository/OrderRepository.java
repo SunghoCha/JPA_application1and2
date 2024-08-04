@@ -109,6 +109,8 @@ public class OrderRepository {
     // 페이징 시 위험할 수 있음.
     // 일대다 관계에서 '다'에 맞춰서 데이터 늘어나서 원하는 페이징 어려움. 일단 메모리에 전체 데이터 불러와서 페이징처리 -> out of memory
     // 그런데 페이징 전에도 어차피 전체 데이터 가져와서 메모리에 로딩하는건 똑같은거 아닌가?
+
+
     public List<Order> findAllWithItem() {
         return em.createQuery(
                 "select distinct o from Order o" +
@@ -116,6 +118,20 @@ public class OrderRepository {
                         " join fetch o.delivery d" +
                         " join fetch o.orderItems oi" +
                         " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+
+    // --> ToOne 관계는 fetch join (row 수를 증가시키지 않으므로 페이징 쿼리에 영향 x)
+    // 컬렉션은 지연로딩 + batchSize 조절로 N+1 문제 예방 ceil(N/BatchSize) + 1 로 바뀜
+    // 배치사이즈는 100~1000 사이. 애플리케이션 입장에서 결국 전체 데이터를 로딩해야 하므로 메모리사용량은 같으니 순간 부하가 다름
+    // WAS와 DB가 버틸수 있는 정도 내에서 최대로 선택. 부하가 걸릴 수 있지만 쿼리수를 줄이는 트레이드오프?
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                        "select o from Order o " +
+                                " join fetch o.member m " +
+                                " join fetch o.delivery d ", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
                 .getResultList();
     }
 }

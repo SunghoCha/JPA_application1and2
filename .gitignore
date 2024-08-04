@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Ignore application.properties or application.yml
+application.properties
+application.yml

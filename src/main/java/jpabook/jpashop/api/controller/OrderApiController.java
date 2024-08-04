@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -54,6 +55,16 @@ public class OrderApiController {
         for (Order order : orders) {
             log.info("order : {}, id : {}" ,order, order.getId());
         }
+        return orders.stream().map(OrderDto::of).collect(toList());
+    }
+
+    @GetMapping("/api/v3.1/orders")
+    public List<OrderDto> ordersV3_page(
+            @RequestParam(name = "offset", defaultValue = "0") int offset,
+            @RequestParam(name = "limit", defaultValue = "0") int limit
+    ) {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery(offset, limit);
+
         return orders.stream().map(OrderDto::of).collect(toList());
     }
 }
