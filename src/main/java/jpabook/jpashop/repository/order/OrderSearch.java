@@ -1,9 +1,7 @@
-package jpabook.jpashop.repository;
+package jpabook.jpashop.repository.order;
 
-import jakarta.persistence.EntityManager;
 import jpabook.jpashop.domain.OrderStatus;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter
