@@ -5,6 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,17 +25,29 @@ public class OrderQueryRepository {
         return result;
     }
 
-//    public List<OrderQueryDto> findAllByDto() {
-//        List<OrderQueryDto> result = findOrders();
-//
-//        return em.createQuery(
-//                        "select new jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id ,i.name, oi.orderPrice, oi.count)" +
-//                                " from OrderItem oi" +
-//                                " join oi.item i " +
-//                                " where oi.order.id = :orderId", OrderItemQueryDto.class)
-//                .setParameter("orderId", orderId)
-//                .getResultList();
-//    }
+    public List<OrderQueryDto> findAllByDto() {
+        List<OrderQueryDto> result = findOrders();
+
+        List<Long> orderIds = result.stream()
+                .map(OrderQueryDto::getOrderId)
+                .toList();
+
+        List<OrderItemQueryDto> orderItems = em.createQuery(
+                        "select new jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id ,i.name, oi.orderPrice, oi.count)" +
+                                " from OrderItem oi" +
+                                " join oi.item i " +
+                                " where oi.order.id in :orderIds", OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
+                .getResultList();
+
+        // stream 중에서도 이 방식은 생소함. 익숙해질것 (Collectors.groupingBy)
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = orderItems.stream()
+                .collect(Collectors.groupingBy(OrderItemQueryDto::getOrderId));
+
+        result.forEach(orderQueryDto -> orderQueryDto.setOrderItems(orderItemMap.get(orderQueryDto.getOrderId())));
+
+        return result;
+    }
 
     // oi.order.id로 표기했지만 실제 테이블에선 oi.order에서 order_id 찾을 수 있으므로 order 참조하지않고 id값 가져올 수 있음
     private List<OrderItemQueryDto> findOrderItems(Long orderId) {
