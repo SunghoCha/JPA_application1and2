@@ -18,6 +18,7 @@ bin/
 !**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
+.idea/
 .idea
 *.iws
 *.iml
@@ -35,3 +36,11 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Ignore application.properties or application.yml
+application.properties
+application.yml
+
+# Ignore application.properties files in all locations
+**/application.properties
+

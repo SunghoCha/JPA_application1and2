@@ -41,3 +41,6 @@ out/
 application.properties
 application.yml
 
+# Ignore application.properties files in all locations
+**/application.properties
+
