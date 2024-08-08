@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
+import study.datajpa.entity.Team;
 
 import java.util.List;
 
@@ -23,9 +25,13 @@ class MemberRepositoryTest {
     @Autowired
     MemberRepository memberRepository;
 
+    @Autowired
+    TeamRepository teamRepository;
+
     @BeforeEach
     void setup() {
         memberRepository.deleteAll();
+        teamRepository.deleteAll();
     }
 
     @Test
@@ -169,5 +175,40 @@ class MemberRepositoryTest {
 
         // then
         assertThat(result).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("MemberDto 조회 검증")
+    void findMemberDto() {
+        // given
+        Team team1 = new Team("team1");
+        Team team2 = new Team("team2");
+
+        teamRepository.saveAll(List.of(team1, team2));
+
+        Member member1 = Member.builder()
+                .team(team1)
+                .userName("member1")
+                .age(10)
+                .build();
+
+        Member member2 = Member.builder()
+                .team(team2)
+                .userName("member2")
+                .age(20)
+                .build();
+
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+        // when
+        List<MemberDto> memberDto = memberRepository.findMemberDto();
+
+        // then
+        assertThat(memberDto).hasSize(2)
+                .extracting(MemberDto::getTeamName, MemberDto::getUserName)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("team1", "member1"),
+                        Tuple.tuple("team2", "member2")
+                );
     }
 }
