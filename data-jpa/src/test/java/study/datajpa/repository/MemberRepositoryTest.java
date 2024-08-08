@@ -146,4 +146,28 @@ class MemberRepositoryTest {
         assertThat(memberCountBeforeDeleted).isEqualTo(2);
         assertThat(memberCountAfterDeleted).isEqualTo(0);
     }
+    
+    @Test
+    @DisplayName("이름_나이조건_검색")
+    void findByUserNameAndAgeGreaterThen() {
+        // given
+        Member member1 = Member.builder()
+                .userName("member1")
+                .age(10)
+                .build();
+
+        Member member2 = Member.builder()
+                .userName("member2")
+                .age(20)
+                .build();
+
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        // when
+        List<Member> result = memberRepository.findByUserNameAndAgeGreaterThan("member2", 15);
+
+        // then
+        assertThat(result).hasSize(1);
+    }
 }
