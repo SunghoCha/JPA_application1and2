@@ -1,5 +1,7 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,9 @@ class MemberJpaRepositoryTest {
 
     @Autowired
     MemberJpaRepository memberJpaRepository;
+
+    @PersistenceContext
+    EntityManager em;
     
     @Test
     @DisplayName("member 등록")
@@ -139,5 +144,27 @@ class MemberJpaRepositoryTest {
 
         // then
         assertThat(members).hasSize(19);
+    }
+
+    @Test
+    @DisplayName("bulk data 수정 테스트")
+    void bulkUpdate() {
+        // given
+        for (int i = 1; i < 30; i++) {
+            Member member = Member.builder()
+                    .age(i)
+                    .userName("member" + i)
+                    .build();
+            memberJpaRepository.save(member);
+        }
+        // when
+        int resultCount = memberJpaRepository.bulkAgePlus(20);
+        //em.flush(); JPQL query(bulkAgePlus()) 실행할 때 트랜잭션 커밋 호출되면서 자동으로 flush() 호출 되므로 생략가능
+        // em.clear(); JPQL query 에 clearAutomatically = true 설정
+
+        long totalCount = memberJpaRepository.totalCount(100);
+        // then
+        assertThat(resultCount).isEqualTo(10);
+        assertThat(totalCount).isEqualTo(10);
     }
 }

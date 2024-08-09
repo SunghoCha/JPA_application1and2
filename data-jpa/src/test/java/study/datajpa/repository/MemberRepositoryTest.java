@@ -249,4 +249,23 @@ class MemberRepositoryTest {
         assertThat(membersGreaterThanAge).hasSize(5);
         assertThat(totalElementsGreaterThanAGe).isEqualTo(19);
     }
+
+    @Test
+    @DisplayName("bulk data 수정 테스트")
+    void bulkUpdate() {
+        // given
+        for (int i = 1; i < 30; i++) {
+            Member member = Member.builder()
+                    .age(i)
+                    .userName("member" + i)
+                    .build();
+            memberRepository.save(member);
+        }
+        // when
+        int resultCount = memberRepository.bulkAgePlus(20);
+        long totalCount = memberRepository.countByAgeGreaterThan(100);
+        // then
+        assertThat(resultCount).isEqualTo(10);
+        assertThat(totalCount).isEqualTo(10);
+    }
 }

@@ -3,7 +3,9 @@ package study.datajpa.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
@@ -30,5 +32,16 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Page<Member> findByAgeGreaterThan(int age, Pageable pageable);
 
+    int countByAgeGreaterThan(int age);
 
+    /*
+        @Modifying과 @Query를 사용하면 영속성 컨텍스트의 변경감지를 통한 업데이트 방식이 아님 
+        영속성 컨텍스트의 캐시와 별개로 데이터베이스에 직접 접근하는거라 영속성 컨텍스트와 데이터베이스의 상태가 서로 일치하지 않을 수 있음
+         em.flush()로 영속성 컨텍스트의 변경사항을 데이터베이스에 반영하고 em.clear()를 통해 영속성 컨텍스트 내용을 날리면
+         엔티티 매니저는 1차캐시가 없으므로 최신사항이 모두 반영된 데이터베이스로부터 새로운 데이터를 가져와서 캐싱하고 반환해줌
+         * JPQL query를 날릴때 트랜잭션 커밋이 자동으로 호출되고 커밋 전에 flush()가 먼저 자동으로 호출되므로 em.flush() 는 생략 가능
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("update Member m set m.age = m.age + 100 where m.age >= :age")
+    int bulkAgePlus(@Param("age") int age);
 }
