@@ -122,4 +122,22 @@ class MemberJpaRepositoryTest {
         assertThat(memberCountBeforeDeleted).isEqualTo(2);
         assertThat(memberCountAfterDeleted).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("paging 테스트")
+    void paging() {
+        // given
+        for (int i = 1; i < 30; i++) {
+            Member member = Member.builder()
+                    .age(i)
+                    .userName("member" + i)
+                    .build();
+            memberJpaRepository.save(member);
+        }
+        // when
+        List<Member> members = memberJpaRepository.findByPage(10, 0, 30);
+
+        // then
+        assertThat(members).hasSize(19);
+    }
 }

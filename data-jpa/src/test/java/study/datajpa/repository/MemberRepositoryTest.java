@@ -6,6 +6,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
@@ -210,5 +214,39 @@ class MemberRepositoryTest {
                         Tuple.tuple("team1", "member1"),
                         Tuple.tuple("team2", "member2")
                 );
+    }
+
+    @Test
+    @DisplayName("paging 테스트")
+    void paging() {
+        // given
+        for (int i = 1; i < 30; i++) {
+            Member member = Member.builder()
+                    .age(i)
+                    .userName("member" + i)
+                    .build();
+            memberRepository.save(member);
+        }
+
+        Pageable pageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "age"));
+        // when
+        Page<Member> pageWithSameAge = memberRepository.findByAge(10, pageRequest);
+        Page<Member> pageGreaterThanAge = memberRepository.findByAgeGreaterThan(10, pageRequest);
+
+        pageWithSameAge.map(MemberDto::of); // page에서 mpa으로 entity -> dto 변환 가능
+
+        List<Member> membersSameAge = pageWithSameAge.getContent();
+        long totalElementsWithSameAge = pageWithSameAge.getTotalElements();
+
+        List<Member> membersGreaterThanAge = pageGreaterThanAge.getContent();
+        long totalElementsGreaterThanAGe = pageGreaterThanAge.getTotalElements();
+
+        // then
+        assertThat(pageWithSameAge).hasSize(1);
+        assertThat(membersSameAge).hasSize(1);
+
+        assertThat(pageGreaterThanAge).hasSize(5);
+        assertThat(membersGreaterThanAge).hasSize(5);
+        assertThat(totalElementsGreaterThanAGe).isEqualTo(19);
     }
 }

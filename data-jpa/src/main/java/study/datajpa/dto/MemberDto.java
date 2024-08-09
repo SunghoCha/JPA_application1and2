@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import study.datajpa.entity.Member;
 
 @Getter @Setter
 @NoArgsConstructor
@@ -18,5 +19,12 @@ public class MemberDto {
         this.id = id;
         this.userName = userName;
         this.teamName = teamName;
+    }
+
+    public static Member of(Member m) {
+        return Member.builder()
+                .userName(m.getUserName())
+                .team(m.getTeam())
+                .build();
     }
 }
