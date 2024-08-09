@@ -81,6 +81,28 @@ class MemberRepositoryTest {
     }
 
     @Test
+    @DisplayName("쿼리 힌트 테스트")
+    void queryHint () {
+        // given
+        Member member = Member.builder()
+                .userName("memberA")
+                .build();
+        Member savedMember = memberRepository.save(member);
+        em.flush();
+        em.clear();
+
+        // when
+        Member findMember = memberRepository.findReadOnlyByUserName("memberA");
+        findMember.setUserName("changedMemberA");
+
+        em.flush();
+        em.clear();
+        Member savedMember2 = memberRepository.save(member);
+        // then
+        assertThat(savedMember2.getUserName()).isEqualTo("memberA");
+    }
+
+    @Test
     @DisplayName("단건 조회 검증")
     void findById() {
         // given
@@ -310,5 +332,22 @@ class MemberRepositoryTest {
             System.out.println("member.teamClass = " + member.getTeam().getClass());
             System.out.println("member.team = " + member.getTeam());
         }
+    }
+
+    @Test
+    @DisplayName("Lock 테스트(쿼리 확인용)")
+    void lock() {
+        // given
+        Member member1 = Member.builder()
+                .userName("member1")
+                .age(10)
+                .build();
+
+        memberRepository.save(member1);
+
+        // when
+        List<Member> result = memberRepository.findLockByUserName("member1");
+
+        // then
     }
 }

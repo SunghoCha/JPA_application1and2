@@ -1,11 +1,10 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import study.datajpa.dto.MemberDto;
@@ -49,4 +48,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Override
     @EntityGraph(attributePaths = {"team"})
     List<Member> findAll();
+
+    @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
+    Member findReadOnlyByUserName(String userName);
+
+    // 실시간 데이터 많은 경우 권장하지 않음(옵티미스틱 락 쓰는걸 권장). 금액을 맞추거나 하는 중요한 로직할 때 사용 권장
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Member> findLockByUserName(String userName);
 }
