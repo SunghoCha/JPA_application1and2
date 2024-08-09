@@ -1,5 +1,7 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +33,9 @@ class MemberRepositoryTest {
 
     @Autowired
     TeamRepository teamRepository;
+
+    @PersistenceContext
+    EntityManager em;
 
     @BeforeEach
     void setup() {
@@ -267,5 +272,43 @@ class MemberRepositoryTest {
         // then
         assertThat(resultCount).isEqualTo(10);
         assertThat(totalCount).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("fetch join 테스트")
+    void findMemberLazy() {
+        // given
+        Team team1 = new Team("team1");
+        Team team2 = new Team("team2");
+
+        teamRepository.saveAll(List.of(team1, team2));
+
+        Member member1 = Member.builder()
+                .team(team1)
+                .userName("member1")
+                .age(10)
+                .build();
+
+        Member member2 = Member.builder()
+                .team(team2)
+                .userName("member2")
+                .age(20)
+                .build();
+
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        em.flush();
+        em.clear();
+
+        // when
+        List<Member> members = memberRepository.findAll();
+
+        // then
+        for (Member member : members) {
+            System.out.println("member.getUserName() = " + member.getUserName());
+            System.out.println("member.teamClass = " + member.getTeam().getClass());
+            System.out.println("member.team = " + member.getTeam());
+        }
     }
 }
