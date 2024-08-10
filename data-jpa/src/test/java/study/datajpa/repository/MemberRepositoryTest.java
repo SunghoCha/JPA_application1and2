@@ -350,4 +350,14 @@ class MemberRepositoryTest {
 
         // then
     }
+    
+    @Test
+    @DisplayName("커스텀 repository")
+    void callCustom() {
+        // given
+        memberRepository.findMemberCustom();
+        // when
+        
+        // then
+    }
 }
