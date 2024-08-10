@@ -5,9 +5,11 @@ import jakarta.persistence.PersistenceContext;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import study.datajpa.repository.MemberRepository;
 
 import java.util.List;
 
@@ -21,6 +23,9 @@ class MemberTest {
 
     @PersistenceContext
     EntityManager em;
+
+    @Autowired
+    MemberRepository memberRepository;
 
     @Test
     @DisplayName("Member 엔티티 생성")
@@ -77,5 +82,32 @@ class MemberTest {
         System.out.println("members.get(0).getTeam() = " + members.get(0).getTeam());
         System.out.println("members.get(0).getTeam() = " + members.get(0).getTeam().getClass());
         System.out.println("members.get(0).getTeam() = " + members.get(0).getTeam().getName());
+    }
+    
+    @Test
+    @DisplayName("Auditing 테스트")
+    void JpaEventBaseEntity() throws Exception {
+        // given
+        Member member1 = Member.builder()
+                .userName("member1")
+                .age(10)
+                .build();
+
+        memberRepository.save(member1); // @PrePersist
+
+        Thread.sleep(100); //테스트용... update시 최소 100ms나게 해서 확인하기 위한 용도로 임시로 사용
+        member1.setUserName("member2");
+
+        em.flush(); //@PreUpdate
+        em.clear();
+
+        // when
+        Member findMember = memberRepository.findById(member1.getId()).orElseThrow(IllegalArgumentException::new);
+
+        // then
+        System.out.println("findMember.getCreatedDate = " + findMember.getCreatedDate());
+        System.out.println("findMember.getLastModifiedDate = " + findMember.getLastModifiedDate());
+        System.out.println("findMember.getCreatedBy = " + findMember.getCreatedBy());
+        System.out.println("findMember.getLastModifiedBy = " + findMember.getLastModifiedBy());
     }
 }
