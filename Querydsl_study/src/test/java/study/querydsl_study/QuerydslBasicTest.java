@@ -1,6 +1,8 @@
 package study.querydsl_study;
 
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.Entity;
@@ -19,6 +21,7 @@ import study.querydsl_study.entity.Member;
 import study.querydsl_study.entity.QMember;
 import study.querydsl_study.entity.QTeam;
 import study.querydsl_study.entity.Team;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -296,8 +299,8 @@ public class QuerydslBasicTest {
     @DisplayName("세타 조인(카르테시안 곱) 테스트(이 방식은 outer join 불가능)")
     void theta_join() {
         // given
-        em.persist(createMember("teamA",10, null));
-        em.persist(createMember("teamB",20, null));
+        em.persist(createMember("teamA", 10, null));
+        em.persist(createMember("teamB", 20, null));
         // when
         List<Member> result = queryFactory
                 .select(member)
@@ -405,26 +408,26 @@ public class QuerydslBasicTest {
     /*
         나이가 가장 많은 회원 조회
      */
- @Test
- @DisplayName("서브쿼리(최대값) 테스트")
- void subQuery_aboutMax() {
-     // given
-     QMember memberSub = new QMember("memberSub");
+    @Test
+    @DisplayName("서브쿼리(최대값) 테스트")
+    void subQuery_aboutMax() {
+        // given
+        QMember memberSub = new QMember("memberSub");
 
-     // when
-     List<Member> result = queryFactory
-             .selectFrom(member)
-             .where(member.age.eq(
-                     JPAExpressions
-                             .select(memberSub.age.max())
-                             .from(memberSub)
-             ))
-             .fetch();
+        // when
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.eq(
+                        JPAExpressions
+                                .select(memberSub.age.max())
+                                .from(memberSub)
+                ))
+                .fetch();
 
-     // then
-     assertThat(result).extracting("age")
-             .containsExactly(40);
- }
+        // then
+        assertThat(result).extracting("age")
+                .containsExactly(40);
+    }
 
     /*
        나이가 가장 평균 이상인 회원 조회
@@ -514,6 +517,83 @@ public class QuerydslBasicTest {
         되도록 DB는 데이터를 퍼올리는 용도로만 사용하자
      */
 
+
+    
+    /*
+        Case문으로 DB에서 처리하지말고 데이터를 가져와서 애플리케이션에서 처리하자
+     */
+    @Test
+    @DisplayName("Case Basic 테스트")
+    void basicCase() {
+        // given
+
+        // when
+        List<String> result = queryFactory
+                .select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+        // then
+        for (String string : result) {
+            System.out.println("string = " + string);
+        }
+    }
+
+    @Test
+    @DisplayName("Case Complex 테스트")
+    void complexCase() {
+        // given
+
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(member.age, new CaseBuilder()
+                        .when(member.age.between(0, 20)).then("0 ~ 20살")
+                        .when(member.age.between(21, 30)).then("21 ~ 30삶")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        // then
+        for (com.querydsl.core.Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    @Test
+    @DisplayName("상수 테스트")
+    void constant() {
+        // given
+
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(member.userName, Expressions.constant("CONSTANT"))
+                .from(member)
+                .fetch();
+        // then
+        for (com.querydsl.core.Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    @Test
+    @DisplayName("concat 테스트")
+    void concat() {
+        // given
+
+        // when
+        List<String> result = queryFactory
+                .select(member.userName.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.userName.eq("member1"))
+                .fetch();
+        // then
+        for (String s : result) {
+            System.out.println("s = " + s);
+
+        }
+    }
 
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()
