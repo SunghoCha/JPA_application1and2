@@ -17,6 +17,7 @@ import study.querydsl_study.entity.Team;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.filter;
 import static study.querydsl_study.entity.QMember.*;
 import static study.querydsl_study.entity.QTeam.*;
 
@@ -256,6 +257,104 @@ public class QuerydslBasicTest {
 
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
+    }
+
+    /*
+        팀 A에 소속된 모든 회원
+     */
+    @Test
+    @DisplayName("join 테스트")
+    void join() {
+        // given
+
+        // when
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        // then
+        assertThat(result).hasSize(2)
+                .extracting(Member::getUserName, Member::getAge)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("member1", 10),
+                        Tuple.tuple("member2", 20)
+                );
+    }
+
+    /*
+        세타 조인
+        회원의 이름이 팀 이름과 같은 회원 조회
+     */
+    @Test
+    @DisplayName("세타 조인(카르테시안 곱) 테스트(이 방식은 outer join 불가능)")
+    void theta_join() {
+        // given
+        em.persist(createMember("teamA",10, null));
+        em.persist(createMember("teamB",20, null));
+        // when
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.userName.eq(team.name))
+                .fetch();
+        // then
+        assertThat(result).hasSize(2)
+                .extracting(Member::getUserName, Member::getAge)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("teamA", 10),
+                        Tuple.tuple("teamB", 20)
+                );
+
+        assertThat(result)
+                .extracting("userName")
+                .containsExactly("teamA", "teamB");
+    }
+
+    /*
+        회원과 팀을 조인하면서 팀 이름이 teamA인 팀만 조인, 회원은 모두 조회
+        JPQL: select m, t from Member m left join Team t on t.name = 'teamA'
+     */
+    @Test
+    @DisplayName("join-on 테스트")
+    void join_on_filtering() {
+        // 지금처럼 외부조인아니고 내부조인이면 굳이 on안쓰고 where로 해결
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .join(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+        // when
+
+        // then
+        for (com.querydsl.core.Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    /*
+        연관관계가 없는 엔티티 외부 조인
+        회원의 이름이 팀 이름과 같은 회원 외부 조인
+    */
+    @Test
+    @DisplayName("on 외부조인")
+    void join_on_no_relation() {
+        // given
+        em.persist(createMember("teamA",10, null));
+        em.persist(createMember("teamB",20, null));
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(team).on(member.userName.eq(team.name))
+                .fetch();
+        // then
+        for (com.querydsl.core.Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+
+
     }
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()
