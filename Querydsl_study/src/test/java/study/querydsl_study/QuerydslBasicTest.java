@@ -1,9 +1,14 @@
 package study.querydsl_study;
 
 import com.querydsl.core.QueryResults;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnit;
 import org.assertj.core.groups.Tuple;
+import org.hibernate.dialect.TiDBDialect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -341,8 +346,8 @@ public class QuerydslBasicTest {
     @DisplayName("on 외부조인")
     void join_on_no_relation() {
         // given
-        em.persist(createMember("teamA",10, null));
-        em.persist(createMember("teamB",20, null));
+        em.persist(createMember("teamA", 10, null));
+        em.persist(createMember("teamB", 20, null));
         // when
         List<com.querydsl.core.Tuple> result = queryFactory
                 .select(member, team)
@@ -353,9 +358,163 @@ public class QuerydslBasicTest {
         for (com.querydsl.core.Tuple tuple : result) {
             System.out.println("tuple = " + tuple);
         }
-
-
     }
+
+    @PersistenceUnit
+    EntityManagerFactory emf;
+
+    @Test
+    @DisplayName("페치조인 없는 버전")
+    void fetchJoinNo() {
+        // given
+        em.flush();
+        em.clear();
+
+        // when
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.userName.eq("member1"))
+                .fetchOne();
+
+        boolean isLoaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+
+        // then
+        assertThat(isLoaded).as("패치 조인 미적용").isFalse();
+    }
+
+    @Test
+    @DisplayName("페치조인 없는 버전")
+    void fetchJoin() {
+        // given
+        em.flush();
+        em.clear();
+
+        // when
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.userName.eq("member1"))
+                .fetchOne();
+
+        boolean isLoaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+
+        // then
+        assertThat(isLoaded).as("패치 조인 적용").isTrue();
+    }
+
+    /*
+        나이가 가장 많은 회원 조회
+     */
+ @Test
+ @DisplayName("서브쿼리(최대값) 테스트")
+ void subQuery_aboutMax() {
+     // given
+     QMember memberSub = new QMember("memberSub");
+
+     // when
+     List<Member> result = queryFactory
+             .selectFrom(member)
+             .where(member.age.eq(
+                     JPAExpressions
+                             .select(memberSub.age.max())
+                             .from(memberSub)
+             ))
+             .fetch();
+
+     // then
+     assertThat(result).extracting("age")
+             .containsExactly(40);
+ }
+
+    /*
+       나이가 가장 평균 이상인 회원 조회
+    */
+    @Test
+    @DisplayName("서브쿼리(평균) 테스트")
+    void subQuery_aboutAvg() {
+        // given
+        QMember memberSub = new QMember("memberSub");
+
+        // when
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.goe(
+                        JPAExpressions
+                                .select(memberSub.age.avg())
+                                .from(memberSub)
+                ))
+                .fetch();
+
+        // then
+        assertThat(result).hasSize(2)
+                .extracting("age")
+                .containsExactly(30, 40);
+    }
+
+    /*
+   나이가 가장 평균 이상인 회원 조회
+*/
+    @Test
+    @DisplayName("서브쿼리(In query) 테스트")
+    void subQuery_aboutIn_query() {
+        // given
+        QMember memberSub = new QMember("memberSub");
+
+        // when
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.in(
+                        JPAExpressions
+                                .select(memberSub.age)
+                                .from(memberSub)
+                                .where(memberSub.age.gt(10))
+                ))
+                .fetch();
+
+        // then
+        assertThat(result).hasSize(3)
+                .extracting("age")
+                .containsExactly(20, 30, 40);
+    }
+
+    @Test
+    @DisplayName("스칼라 서브쿼리 테스트")
+    void selectSubQuery() {
+        // given
+        QMember memberSub = new QMember("memberSub");
+
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(member.userName,
+                        JPAExpressions
+                                .select(memberSub.age.avg())
+                                .from(memberSub))
+                .from(member)
+                .fetch();
+
+        // then
+        for (com.querydsl.core.Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+    
+    /*
+        < from 절의 서브쿼리 한계 >
+        JPA JPQL 서브쿼리의 한계점으로 from절의 서브쿼리(인라인 뷰)는 지원하지 않는다.
+        당연히 Querydsl도 지원하지 않음. 하이버네이트 구현체를 사용하면 select절의 서브쿼리는 지원함.
+        (Querydsl도 하이버네이트 구현체 사용하면 select 절의 서브쿼리 지원)
+        
+        < from절 의 서브쿼리 한계 해결방안>
+        1. 서브쿼리를 join으로 변경(불가능한 경우도 있음)
+        2. 애플리케이션에서 쿼리를 분리해서 2번 실행 (성능이 엄청 중요하지 않은 경우에 한정)
+        3. nativeSQL 사용
+        
+        **
+        보통 인라인 뷰의 필요성은 쿼리에서 모든걸 해결하려고 시도하면서 생기는 경우가 많음
+        되도록 DB는 데이터를 퍼올리는 용도로만 사용하자
+     */
+
+
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()
                 .userName(name)
