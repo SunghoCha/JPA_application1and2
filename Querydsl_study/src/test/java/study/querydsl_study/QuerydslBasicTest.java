@@ -12,12 +12,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl_study.entity.Member;
 import study.querydsl_study.entity.QMember;
+import study.querydsl_study.entity.QTeam;
 import study.querydsl_study.entity.Team;
-
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static study.querydsl_study.entity.QMember.*;
+import static study.querydsl_study.entity.QTeam.*;
 
 @SpringBootTest
 @Transactional
@@ -205,6 +206,57 @@ public class QuerydslBasicTest {
                 );
     }
 
+    @Test
+    @DisplayName("집계 함수 테스트")
+    void aggregation() {
+        // given
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(
+                        member.count(),
+                        member.age.sum(),
+                        member.age.avg(),
+                        member.age.max(),
+                        member.age.min()
+                )
+                .from(member)
+                .fetch();
+
+        com.querydsl.core.Tuple tuple = result.get(0);
+
+        // then
+        assertThat(tuple.get(member.count())).isEqualTo(4);
+        assertThat(tuple.get(member.age.sum())).isEqualTo(100);
+        assertThat(tuple.get(member.age.avg())).isEqualTo(25);
+        assertThat(tuple.get(member.age.max())).isEqualTo(40);
+        assertThat(tuple.get(member.age.min())).isEqualTo(10);
+    }
+
+    /*
+        팀의 이름과 각 팀의 평균 연령 구하기
+     */
+    @Test
+    @DisplayName("그룹 함수")
+    void group() {
+        // given
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(team.name, member.age.avg())
+                .from(member)
+                .join(member.team, team)
+                .groupBy(team.name)
+                .fetch();
+
+        com.querydsl.core.Tuple teamA = result.get(0);
+        com.querydsl.core.Tuple teamB = result.get(1);
+
+        // then
+        assertThat(teamA.get(team.name)).isEqualTo("teamA");
+        assertThat(teamA.get(member.age.avg())).isEqualTo(15);
+
+        assertThat(teamB.get(team.name)).isEqualTo("teamB");
+        assertThat(teamB.get(member.age.avg())).isEqualTo(35);
+    }
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()
                 .userName(name)
