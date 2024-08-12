@@ -1,8 +1,11 @@
 package study.querydsl_study;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -773,6 +776,75 @@ public class QuerydslBasicTest {
         }
 
     }
+    
+    @Test
+    @DisplayName("BooleanBuilder 동적 쿼리 테스트")
+    void dynamicQueryByBooleanBuilder() {
+        // given
+        String userNameParam = "member1";
+        Integer ageParam = 10;
+
+        // when
+        List<Member> members = searchMemberV1(userNameParam, ageParam);
+
+        // then
+        for (Member member1 : members) {
+            System.out.println("member1 = " + member1);
+        }
+    }
+
+    @Test
+    @DisplayName("WhereParam 동적 쿼리 테스트")
+    void dynamicQueryByWhereParam() {
+        // given
+        String userNameParam = "member1";
+        Integer ageParam = 10;
+
+        // when
+        List<Member> members = searchMemberV2(userNameParam, ageParam);
+
+        // then
+        for (Member member1 : members) {
+            System.out.println("member1 = " + member1);
+        }
+    }
+
+    private List<Member> searchMemberV2(String userNameCond, Integer ageCond) {
+        return queryFactory
+                .selectFrom(member)
+                //.where(allEq(userNameCond, ageCond)
+                .where(userNameEq(userNameCond), ageEq(ageCond))
+                .fetch();
+    }
+
+    private BooleanExpression userNameEq(String userNameCond) {
+        return userNameCond != null ? member.userName.eq(userNameCond) : null;
+    }
+
+    private BooleanExpression ageEq(Integer ageCond) {
+        return ageCond != null ? member.age.eq(ageCond) : null;
+    }
+
+    private BooleanExpression allEq(String userNameCond, Integer ageCond) {
+        return userNameEq(userNameCond).and(ageEq(ageCond)); // null 처리 따로해줘야하긴 함..
+    }
+
+    private List<Member> searchMemberV1(String userNameCond, Integer ageCond) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        if (userNameCond != null) {
+            builder.and(member.userName.eq(userNameCond));
+        }
+        if (ageCond != null) {
+            builder.and(member.age.eq(ageCond));
+        }
+
+        return queryFactory
+                .selectFrom(member)
+                .where(builder)
+                .fetch();
+    }
+
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()
                 .userName(name)
