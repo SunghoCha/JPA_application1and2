@@ -100,7 +100,7 @@ public class MemberJpaRepository {
                 .fetch();
     }
 
-    List<MemberTeamDto> search(MemberSearchCond cond) {
+    public List<MemberTeamDto> search(MemberSearchCond cond) {
         return queryFactory
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),
