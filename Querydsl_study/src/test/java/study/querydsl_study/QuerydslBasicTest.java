@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl_study.dto.MemberDto;
+import study.querydsl_study.dto.QMemberDto;
 import study.querydsl_study.dto.UserDto;
 import study.querydsl_study.entity.Member;
 import study.querydsl_study.entity.QMember;
@@ -750,6 +751,27 @@ public class QuerydslBasicTest {
         for (UserDto userDto : result) {
             System.out.println("userDto = " + userDto);
         }
+    }
+
+    // Projection + constructor 는 인자를 잘못전달해도 컴파일단계에서 에러를 잡지못하고 런타임에서 에러 발생
+    // @QueryProjection은 컴파일 단계에서 인자 검증가능
+    // 단점은 애플리케이션의 넓은 영역에서 사용되는 dto가 Querydsl에 의존적. 하부 기술이 바뀔 경우 같이 변경되어야함..
+    @Test
+    @DisplayName("QueryProjection으로 Dto 조회하기")
+    void findDtoByQueryProjection() {
+        // given
+
+        // when
+        List<MemberDto> result = queryFactory
+                .select(new QMemberDto(member.userName, member.age))
+                .from(member)
+                .fetch();
+
+        // then
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
     }
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()

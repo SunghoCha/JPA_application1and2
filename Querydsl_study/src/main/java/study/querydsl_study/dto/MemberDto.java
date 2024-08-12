@@ -1,5 +1,6 @@
 package study.querydsl_study.dto;
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.*;
 
 import javax.annotation.processing.Generated;
@@ -12,6 +13,7 @@ public class MemberDto {
     private String userName;
     private int age;
 
+    @QueryProjection
     @Builder
     public MemberDto(String userName, int age) {
         this.userName = userName;
