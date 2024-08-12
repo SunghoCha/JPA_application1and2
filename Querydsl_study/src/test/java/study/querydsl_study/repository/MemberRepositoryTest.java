@@ -9,12 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl_study.dto.MemberSearchCond;
+import study.querydsl_study.dto.MemberTeamDto;
 import study.querydsl_study.entity.Member;
 import study.querydsl_study.entity.Team;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @SpringBootTest
 @Transactional
@@ -103,6 +106,50 @@ class MemberRepositoryTest {
                 .extracting(Member::getUserName, Member::getAge)
                 .containsExactlyInAnyOrder(
                         Tuple.tuple("member1", 10)
+                );
+    }
+
+    @Test
+    @DisplayName("동적 쿼리 테스트(Where 사용)")
+    void DynamicQuery_Where() {
+        // given
+        Team teamA = Team.builder()
+                .name("teamA")
+                .build();
+
+        Team teamB = Team.builder()
+                .name("teamB")
+                .build();
+
+        em.persist(teamA);
+        em.persist(teamB);
+
+        Member member1 = createMember("member1", 10, teamA);
+        Member member2 = createMember("member2", 20, teamA);
+        Member member3 = createMember("member3", 30, teamB);
+        Member member4 = createMember("member4", 40, teamB);
+
+        em.persist(member1);
+        em.persist(member2);
+        em.persist(member3);
+        em.persist(member4);
+
+        em.flush();
+        em.clear();
+
+        // when
+        MemberSearchCond cond = new MemberSearchCond();
+        cond.setAgeGoe(35);
+        cond.setAgeLoe(40);
+        cond.setTeamName("teamB");
+
+        List<MemberTeamDto> result = memberRepository.search(cond);
+
+        // then
+        assertThat(result).hasSize(1)
+                .extracting("userName", "age")
+                .containsExactlyInAnyOrder(
+                        tuple("member4", 40)
                 );
     }
 }
