@@ -927,4 +927,44 @@ public class QuerydslBasicTest {
                 .execute();
         // then
     }
+
+    // sql function 생소한 개념
+    @Test
+    @DisplayName("SQL 함수 호출 테스트")
+    void sqlFunction() {
+        // given
+
+        // when
+        List<String> result = queryFactory
+                .select(Expressions.stringTemplate(
+                        "function('replace', {0}, {1}, {2})",
+                        member.userName, "member", "M"))
+                .from(member)
+                .fetch();
+
+        // then
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    @DisplayName("SQL 함수 호출 테스트2")
+    void sqlFunction2() {
+        // given
+
+        // when
+        List<String> result = queryFactory
+                .select(member.userName)
+                .from(member)
+//                .where(member.userName.eq(
+//                        Expressions.stringTemplate("function('lower', {0})", member.userName)))
+                .where(member.userName.eq(member.userName.lower()))
+                .fetch();
+
+        // then
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
 }
