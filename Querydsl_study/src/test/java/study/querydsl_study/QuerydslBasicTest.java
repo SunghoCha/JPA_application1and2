@@ -1,6 +1,8 @@
 package study.querydsl_study;
 
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -17,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl_study.dto.MemberDto;
+import study.querydsl_study.dto.UserDto;
 import study.querydsl_study.entity.Member;
 import study.querydsl_study.entity.QMember;
 import study.querydsl_study.entity.QTeam;
@@ -24,8 +28,7 @@ import study.querydsl_study.entity.Team;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.filter;
+import static org.assertj.core.api.Assertions.*;
 import static study.querydsl_study.entity.QMember.*;
 import static study.querydsl_study.entity.QTeam.*;
 
@@ -135,27 +138,27 @@ public class QuerydslBasicTest {
     @DisplayName("fetch 테스트")
     void resultFetch() {
         // given
-        List<Member> fetch = queryFactory
-                .selectFrom(member)
-                .fetch();
+//        List<Member> fetch = queryFactory
+//                .selectFrom(member)
+//                .fetch();
 
-        Member fetchOne = queryFactory
-                .selectFrom(member)
-                .fetchOne();
+//        Member fetchOne = queryFactory
+//                .selectFrom(member)
+//                .fetchOne();
 
-        Member fetchFirst = queryFactory
-                .selectFrom(member)
-                .fetchFirst();
-
-        // 추천되지 않는방법. 성능이슈, 서브쿼리에서 사용 어려움 등..
-        QueryResults<Member> results = queryFactory
-                .selectFrom(member)
-                .fetchResults();
+//        Member fetchFirst = queryFactory
+//                .selectFrom(member)
+//                .fetchFirst();
 
         // 추천되지 않는방법. 성능이슈, 서브쿼리에서 사용 어려움 등..
-        long count = queryFactory
-                .selectFrom(member)
-                .fetchCount();
+//        QueryResults<Member> results = queryFactory
+//                .selectFrom(member)
+//                .fetchResults();
+
+        // 추천되지 않는방법. 성능이슈, 서브쿼리에서 사용 어려움 등..
+//        long count = queryFactory
+//                .selectFrom(member)
+//                .fetchCount();
         // when
 
         // then
@@ -518,7 +521,7 @@ public class QuerydslBasicTest {
      */
 
 
-    
+
     /*
         Case문으로 DB에서 처리하지말고 데이터를 가져와서 애플리케이션에서 처리하자
      */
@@ -595,6 +598,159 @@ public class QuerydslBasicTest {
         }
     }
 
+    @Test
+    @DisplayName("simple Projection 테스트")
+    void simpleProjection() {
+        // given
+
+        // when
+        List<String> result = queryFactory
+                .select(member.userName)
+                .from(member)
+                .fetch();
+
+        // then
+        for (String s : result) {
+            System.out.println("s = " + s);
+        }
+    }
+
+    @Test
+    @DisplayName("tuple Projection 테스트")
+    void tupleProjection() {
+        // given
+
+        // when
+        List<com.querydsl.core.Tuple> result = queryFactory
+                .select(member.userName, member.age)
+                .from(member)
+                .fetch();
+
+        // then
+        for (com.querydsl.core.Tuple tuple : result) {
+
+            String userName = tuple.get(member.userName);
+            Integer age = tuple.get(member.age);
+
+            System.out.println("userName = " + userName);
+            System.out.println("age = " + age);
+
+        }
+    }
+
+    @Test
+    @DisplayName("JPQL로 DTO조회 테스트")
+    void findDtoByJPQL() {
+        // given
+
+        // when
+        List<MemberDto> result = em.createQuery("select new study.querydsl_study.dto.MemberDto(m.userName, m.age) from Member m", MemberDto.class)
+                .getResultList();
+
+        // then
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl Setter로 Dto 조회하기")
+    void findDtoBySetter() {
+        // given
+
+        // when
+        List<MemberDto> result = queryFactory
+                .select(Projections.bean(MemberDto.class,
+                        member.userName,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        // then
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl Field로 Dto 조회하기")
+    void findDtoByField() {
+        // given
+
+        // when
+        List<MemberDto> result = queryFactory
+                .select(Projections.fields(MemberDto.class,
+                        member.userName,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        // then
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl 생성자로 Dto 조회하기")
+    void findDtoByConstructor() {
+        // given
+
+        // when
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class,
+                        member.userName,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        // then
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl 별칭 + Field로 CustomDto 조회하기")
+    void findCustomDtoByFieldAndAlias() {
+        // given
+        QMember memberSub = new QMember("memberSub");
+        // when
+        List<UserDto> result = queryFactory
+                .select(Projections.fields(UserDto.class,
+                        member.userName.as("name"),
+                        ExpressionUtils.as(JPAExpressions
+                                .select(memberSub.age.max())
+                                .from(memberSub), "age")))
+                .from(member)
+                .fetch();
+
+        // then
+        for (UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl 별칭 + Constructor로 CustomDto 조회하기")
+    void findCustomDtoByConstructorAndAlias() {
+        // given
+        QMember memberSub = new QMember("memberSub");
+        // when
+        List<UserDto> result = queryFactory
+                .select(Projections.constructor(UserDto.class,
+                        member.userName,
+                        JPAExpressions
+                                .select(memberSub.age.max())
+                                .from(memberSub)))
+                .from(member)
+                .fetch();
+
+        // then
+        for (UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
     private static Member createMember(String name, int age, Team team) {
         return Member.builder()
                 .userName(name)
