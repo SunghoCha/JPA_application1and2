@@ -74,6 +74,15 @@ public class QuerydslBasicTest {
         em.clear();
     }
 
+    // 원래는 아래쪽에 놔야하지만 일단 위쪽에 배치해둠
+    private static Member createMember(String name, int age, Team team) {
+        return Member.builder()
+                .userName(name)
+                .age(age)
+                .team(team)
+                .build();
+    }
+    
     @Test
     @DisplayName("JPQL 기본테스트")
     void startJPQL() {
@@ -845,11 +854,77 @@ public class QuerydslBasicTest {
                 .fetch();
     }
 
-    private static Member createMember(String name, int age, Team team) {
-        return Member.builder()
-                .userName(name)
-                .age(age)
-                .team(team)
-                .build();
+    /*
+        나이가 28살 미만인 사람들은 이름을 비회원으로 변경.
+
+        member1.age = 10 -> member1.userName = 비회원
+        member2.age = 20 -> member1.userName = 비회원
+        member3.age = 30 -> 변경사항 없음
+        member4.age = 40 -> 변경사항 없음
+     */
+    @Test
+    @DisplayName("벌크 업데이트 테스트")
+    void bulkUpdate() {
+        // given
+
+        // when
+        long count = queryFactory
+                .update(member)
+                .set(member.userName, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        List<Member> members = queryFactory
+                .selectFrom(member)
+                .fetch();
+        
+        // queryFactory로 query 실행하면 영속성 컨텍스트 안 거치고 DB에서 데이터 바로 가져오는듯?
+        // 그리고 가져와서 영속성 컨텍스트의 내용에 동일한 식별자가 있을 때 영속성 컨텍스트의 내용이 우선권을 가지지 않고 DB에서 가져온 내용으로 업데이트되는 것 같은 결과가 나옴(추측).
+        // 그래서 em.flush()(이건 애초에 JPQL 쿼리 실행될 때 자동 호출), em.clear()를 하지 않아도 동일한 결과 나오는듯..
+        // 그래도 JPARepository의 쿼리 방식에서는 영속성 컨텍스트를 먼저 참고해서 이런 문제가 발생할 수 있으니 벌크성 쿼리날릴 때는 그냥 습관적으로 em.flush(), em.clear()하는게 나을지도..
+        em.flush();
+        em.clear();
+
+        // then
+        assertThat(count).isEqualTo(2);
+        assertThat(members).hasSize(4)
+                .extracting(Member::getAge, Member::getUserName)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple(10, "비회원"),
+                        Tuple.tuple(20, "비회원"),
+                        Tuple.tuple(30, "member3"),
+                        Tuple.tuple(40, "member4")
+                );
+    }
+    
+    @Test
+    @DisplayName("벌크성 추가 업데이트 테스트(연봉 인상, 나이 추가 등..)")
+    void bulkAdd() {
+        // given
+        
+        // when
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+        long count2 = queryFactory
+                .update(member)
+                .set(member.age, member.age.multiply(2))
+                .execute();
+        // then
+    }
+
+    @Test
+    @DisplayName("벌크성 삭제")
+    void bulkDelete() {
+        // given
+
+        // when
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+        // then
     }
 }
