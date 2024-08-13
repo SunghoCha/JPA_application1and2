@@ -8,6 +8,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl_study.dto.MemberSearchCond;
 import study.querydsl_study.dto.MemberTeamDto;
@@ -151,5 +153,46 @@ class MemberRepositoryTest {
                 .containsExactlyInAnyOrder(
                         tuple("member4", 40)
                 );
+    }
+
+    @Test
+    @DisplayName("페이징 포함 조회 테스트")
+    void searchPageSimple() {
+        // given
+        Team teamA = Team.builder()
+                .name("teamA")
+                .build();
+
+        Team teamB = Team.builder()
+                .name("teamB")
+                .build();
+
+        em.persist(teamA);
+        em.persist(teamB);
+
+        Member member1 = createMember("member1", 10, teamA);
+        Member member2 = createMember("member2", 20, teamA);
+        Member member3 = createMember("member3", 30, teamB);
+        Member member4 = createMember("member4", 40, teamB);
+
+        em.persist(member1);
+        em.persist(member2);
+        em.persist(member3);
+        em.persist(member4);
+
+        em.flush();
+        em.clear();
+
+        // when
+        MemberSearchCond cond = new MemberSearchCond();
+        PageRequest pageRequest = PageRequest.of(0, 3);
+
+        Page<MemberTeamDto> result = memberRepository.searchPageSimple(cond, pageRequest);
+
+        // then
+        assertThat(result).hasSize(3);
+        assertThat(result.getContent())
+                .extracting("userName")
+                .containsExactly("member1", "member2", "member3");
     }
 }
